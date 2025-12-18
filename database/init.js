@@ -13,18 +13,13 @@ const ridUtil = require('../utils/ridUtil');
 
 async function initializeDatabase() {
   try {
-    console.log('🚀 Starting database initialization...\n');
-    
     const { sequelize, Role, User } = db;
     
-    // Step 1: Drop and recreate all tables
-    console.log('Step 1️⃣  - Resetting database schema...');
+    // Reset database schema
     await sequelize.drop();
     await sequelize.sync();
-    console.log('✅ Schema reset complete\n');
     
-    // Step 2: Initialize roles
-    console.log('Step 2️⃣  - Initializing roles...');
+    // Initialize roles
     const roles = [
       {
         role_name: 'admin',
@@ -95,17 +90,12 @@ async function initializeDatabase() {
     
     for (const roleData of roles) {
       await Role.create(roleData);
-      console.log(`  ✅ Created role: ${roleData.role_name}`);
     }
-    console.log('');
     
-    // Step 3: Initialize RID counters
-    console.log('Step 3️⃣  - Initializing RID counters...');
+    // Initialize RID counters
     await ridUtil.initializeCounters();
-    console.log('✅ RID counters ready\n');
     
-    // Step 4: Create default admin account
-    console.log('Step 4️⃣  - Creating default admin account...');
+    // Create default admin account
     const bcrypt = require('bcryptjs');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(
@@ -122,20 +112,8 @@ async function initializeDatabase() {
       is_active: true
     });
     
-    console.log(`✅ Admin created: ${adminUser.email}\n`);
-    
-    console.log('═'.repeat(50));
-    console.log('✨ Database initialization completed!\n');
-    console.log('📊 Summary:');
-    console.log('   • Roles: 4 (admin, manager, staff, customer)');
-    console.log('   • Admin Account: admin@restaurant.com');
-    console.log('   • Password: Admin@123456');
-    console.log('   • RID System: Sequential (br-1000+, usr-1000+, etc)\n');
-    console.log('🚀 Next steps:');
-    console.log('   1. npm run seed-data     (populate sample data)');
-    console.log('   2. npm run dev           (start development server)');
-    console.log('   3. npm run test-api      (test all endpoints)');
-    console.log('═'.repeat(50) + '\n');
+    console.log('✅ Database initialization completed!');
+    console.log(`   Admin: admin@restaurant.com`);
     
     process.exit(0);
   } catch (error) {

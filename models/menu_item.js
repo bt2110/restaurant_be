@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
   const MenuItem = sequelize.define('MenuItem', {
     item_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     rid: { type: DataTypes.STRING(32), unique: true },
-    category_id: { type: DataTypes.INTEGER, allowNull: false },
+    category_id: { type: DataTypes.INTEGER, allowNull: true },
     branch_id: { type: DataTypes.INTEGER, allowNull: false },
     item_name: { type: DataTypes.STRING(60), allowNull: false },
     item_description: { type: DataTypes.STRING(255) },
@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     // Quan hệ N-1: MenuItem thuộc về một Category
     MenuItem.belongsTo(models.MenuCategory, {
       foreignKey: 'category_id',
-      onDelete: 'SET NULL' 
+      onDelete: 'RESTRICT' 
     });
 
     // Quan hệ N-1: MenuItem thuộc về một Branch

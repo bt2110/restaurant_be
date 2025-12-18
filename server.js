@@ -33,7 +33,7 @@ app.get('/api-docs/swagger.json', (req, res) => {
 // Kiểm tra kết nối Database
 db.sequelize.authenticate()
   .then(async () => {
-    console.log('✅ Kết nối Database PostgreSQL thành công.');
+    console.log('✅ Kết nối Database MySQL thành công.');
     // Initialize RID counters from database
     await ridUtil.initializeCounters();
     // Đồng bộ Models (CHỈ dùng trong môi trường Dev/Test)

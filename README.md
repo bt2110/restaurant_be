@@ -4,39 +4,16 @@ Professional Node.js Express REST API for restaurant management with authenticat
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js 16.x or higher
-- PostgreSQL 12.x or higher
-- npm 7.x or higher
-
-### Installation
-
+### 30-second setup:
 ```bash
-# 1. Install dependencies
-npm install
-
-# 2. Create .env file (copy from .env.example or set manually)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=restaurant_db
-DB_USER=postgres
-DB_PASSWORD=your_password
-JWT_SECRET=your_secret_key
-ADMIN_DEFAULT_PASSWORD=Admin@123456
-
-# 3. Initialize database
-npm run db:init
-
-# 4. Populate sample data (optional)
-npm run db:seed
-
-# 5. Start server
-npm run dev              # Development with nodemon
-npm start               # Production
+npm run docker:up    # Không cần nếu dùng database local
+npm install          # Install dependencies
+npm run db:init      # Initialize database
+npm run dev          # Start server
 ```
 
-Server runs on `http://localhost:3000`  
-API Docs: `http://localhost:3000/api-docs`
+Server: http://localhost:3000  
+API Docs: http://localhost:3000/api-docs
 
 ---
 
@@ -57,16 +34,15 @@ API Docs: `http://localhost:3000/api-docs`
 # Database
 npm run db:init        # Initialize DB with schema + 4 roles + admin
 npm run db:seed        # Add sample data (3 branches, 12 users, etc)
-npm run db:check       # Check database health
 
 # Server
 npm start              # Production mode
 npm run dev            # Development with auto-reload
 
-# Utilities (Advanced)
-npm run reset-db       # Reset database to blank state
-npm run init:roles     # Initialize roles only
-npm run init:admin     # Initialize admin user only
+# Docker
+npm run docker:up      # Start MySQL container
+npm run docker:down    # Stop MySQL container
+npm run docker:logs    # View MySQL logs
 ```
 
 ---
@@ -176,7 +152,7 @@ Running `npm run db:seed` creates:
 
 ## 🗄️ Database Schema
 
-13 Tables:
+13 Tables (MySQL 5.7+):
 - `users` - User accounts
 - `roles` - Role definitions (admin, manager, staff, customer)
 - `branches` - Restaurant locations
@@ -231,20 +207,22 @@ notif-1000...                     (Notifications)
 restaurant-backend/
 ├── server.js                    Entry point
 ├── package.json                 Dependencies
-├── config/                      Configuration
-├── models/                      Sequelize ORM models
-├── controllers/                 Request handlers
-├── services/                    Business logic
-├── routes/                      API routes
-├── utils/                       Utilities (JWT, validation, RID)
+├── docker-compose.yml           Docker MySQL setup
+├── config/                      Configuration files
+│   ├── database.js             Database connection config
+│   └── swagger.js              API documentation config
+├── models/                      Sequelize ORM models (13 tables)
+├── controllers/                 Request handlers (8 modules)
+├── services/                    Business logic layer
+├── routes/                      API endpoint routes
 ├── middleware/                  Express middleware
-├── database/                    Database scripts
-│   ├── init.js                 Initialize DB
-│   ├── seed.js                 Populate data
-│   ├── check.js                Health check
-│   ├── schema.sql              SQL schema
-│   └── README.md               Database docs
-└── scripts/                     Legacy scripts
+├── utils/                       Utilities (JWT, validation, RID system)
+├── database/                    Database management
+│   ├── init.js                 Initialize schema + roles + admin
+│   ├── seed.js                 Populate sample data
+│   └── schema.sql              MySQL schema definition
+└── scripts/                     Seed data script
+    └── seed-sample-data.js     Additional sample data
 ```
 
 ---
@@ -253,11 +231,12 @@ restaurant-backend/
 
 | Problem | Solution |
 |---------|----------|
-| Connection refused | Run `npm run db:init` |
-| Missing tables | Check: `npm run db:check` |
-| Port 3000 in use | Change PORT in .env or kill process |
+| Port 3000 already in use | Change PORT in .env or kill process on 3000 |
+| MySQL connection failed | Run `npm run docker:up` or check DB_HOST in .env |
+| Missing tables | Run `npm run db:init` to initialize schema |
+| Port 3306 in use | Change DB_PORT in .env |
 | JWT token expired | Login again to get new token |
-| Database error | Verify PostgreSQL running and credentials correct |
+| Database error | Check MySQL logs with `npm run docker:logs` |
 
 ---
 
@@ -276,10 +255,10 @@ Features:
 ## 📝 Environment Variables
 
 ```env
-DB_HOST              PostgreSQL host (default: localhost)
-DB_PORT              PostgreSQL port (default: 5432)
+DB_HOST              MySQL host (default: localhost)
+DB_PORT              MySQL port (default: 3306)
 DB_NAME              Database name (default: restaurant_db)
-DB_USER              Database user (default: postgres)
+DB_USER              Database user (default: root)
 DB_PASSWORD          Database password (required)
 PORT                 Server port (default: 3000)
 NODE_ENV             Environment (development/production)
@@ -294,10 +273,10 @@ ADMIN_DEFAULT_PASSWORD Default admin password (default: Admin@123456)
 
 1. Set `NODE_ENV=production`
 2. Generate strong `JWT_SECRET`
-3. Configure production PostgreSQL
+3. Configure production MySQL database
 4. Use process manager (PM2): `pm2 start server.js --name restaurant-api`
 5. Setup SSL/HTTPS with reverse proxy
-6. Enable database backups
+6. Enable database backups and scheduled maintenance
 
 ---
 
@@ -313,6 +292,6 @@ ADMIN_DEFAULT_PASSWORD Default admin password (default: Admin@123456)
 
 **Version:** 1.0.0  
 **Framework:** Express 5.1.0  
-**Database:** PostgreSQL 12+  
-**Last Updated:** November 2024
+**Database:** MySQL 5.7+  
+**Last Updated:** December 2024
 

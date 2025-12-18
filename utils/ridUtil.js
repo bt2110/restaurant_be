@@ -33,7 +33,6 @@ exports.generateRid = (prefix) => {
  */
 exports.initializeCounters = async () => {
   try {
-    console.log('Initializing RID counters from database...');
     const { sequelize } = db;
     
     // Get max RID for each table
@@ -45,7 +44,7 @@ exports.initializeCounters = async () => {
     for (let i = 0; i < tables.length; i++) {
       try {
         const result = await sequelize.query(
-          `SELECT COALESCE(MAX(CAST(SUBSTRING(rid FROM POSITION('-' IN rid) + 1) AS INTEGER)), 999) as max_num FROM ${tables[i]}`
+          `SELECT COALESCE(MAX(CAST(SUBSTRING(rid, POSITION('-' IN rid) + 1) AS UNSIGNED)), 999) as max_num FROM ${tables[i]}`
         );
         const maxNum = result[0][0]?.max_num || 999;
         ridCounters[prefixes[i]] = maxNum + 1;
@@ -54,10 +53,7 @@ exports.initializeCounters = async () => {
         ridCounters[prefixes[i]] = 1000;
       }
     }
-    
-    console.log('✅ RID counters initialized:', ridCounters);
   } catch (error) {
-    console.error('Error initializing RID counters:', error.message);
     // Fallback: reset to 1000
     ridCounters = {
       br: 1000,

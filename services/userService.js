@@ -20,8 +20,8 @@ exports.getAllUsers = async (page = 1, limit = 10, filters = {}) => {
   if (filters.is_active !== undefined) where.is_active = filters.is_active;
   if (filters.search) {
     where[db.Sequelize.Op.or] = [
-      { user_name: { [db.Sequelize.Op.iLike]: `%${filters.search}%` } },
-      { email: { [db.Sequelize.Op.iLike]: `%${filters.search}%` } }
+      { user_name: { [db.Sequelize.Op.like]: `%${filters.search}%` } },
+      { email: { [db.Sequelize.Op.like]: `%${filters.search}%` } }
     ];
   }
 

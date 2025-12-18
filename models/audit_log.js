@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       comment: 'Action type: login, logout, password_changed, account_deleted, role_changed, etc.'
     },
     details: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       allowNull: true,
       comment: 'Additional action details in JSON format'
     },
