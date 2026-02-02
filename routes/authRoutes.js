@@ -25,7 +25,7 @@ const { verifyToken, isAdmin, verifyTokenOptional } = require('../middleware/aut
  *               password:
  *                 type: string
  *                 format: password
- *                 example: 'Password@123'
+ *                 example: 'Admin@123456'
  *     responses:
  *       200:
  *         description: Đăng nhập thành công

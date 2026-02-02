@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
     description: {
       type: DataTypes.STRING(255),
     },
+    branch_image: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
     is_delete: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

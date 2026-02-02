@@ -10,7 +10,8 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f mysql",
     "db:init": "node database/init.js",
-    "db:seed": "node database/seed.js"
+    "db:seed": "node database/seed.js",
+    "db:migrate": "node database/migration.js"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "mysql2": "^3.6.0",
     "sequelize": "^6.37.7",
     "swagger-jsdoc": "^6.2.8",

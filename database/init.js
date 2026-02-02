@@ -14,11 +14,17 @@ const ridUtil = require('../utils/ridUtil');
 async function initializeDatabase() {
   try {
     const { sequelize, Role, User } = db;
-    
-    // Reset database schema
-    await sequelize.drop();
-    await sequelize.sync();
-    
+
+    // By default run safe sync (apply changes). To fully reset use RESET_DB=true
+    if (process.env.RESET_DB === 'true') {
+      console.log('⚠️ RESET_DB=true - Dropping and recreating database schema');
+      await sequelize.drop();
+      await sequelize.sync();
+    } else {
+      console.log('🔄 Syncing database schema (safe)');
+      await sequelize.sync({ alter: true });
+    }
+
     // Initialize roles
     const roles = [
       {
@@ -89,32 +95,36 @@ async function initializeDatabase() {
     ];
     
     for (const roleData of roles) {
-      await Role.create(roleData);
+      // create if not exists
+      await Role.findOrCreate({ where: { role_name: roleData.role_name }, defaults: roleData });
     }
-    
+
     // Initialize RID counters
     await ridUtil.initializeCounters();
-    
-    // Create default admin account
+
+    // Create default admin account if not exists
     const bcrypt = require('bcryptjs');
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(
-      process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@123456',
-      salt
-    );
-    
-    const adminUser = await User.create({
-      rid: ridUtil.generateRid('usr'),
-      user_name: 'Administrator',
-      email: 'admin@restaurant.com',
-      password: hashedPassword,
-      role_id: 1,
-      is_active: true
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@restaurant.com';
+    const adminDefaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@123456';
+    const [adminUser, created] = await User.findOrCreate({
+      where: { email: adminEmail },
+      defaults: {
+        rid: ridUtil.generateRid('usr'),
+        user_name: 'Administrator',
+        email: adminEmail,
+        password: await (async () => { const s = await bcrypt.genSalt(10); return await bcrypt.hash(adminDefaultPassword, s); })(),
+        role_id: 1,
+        is_active: true
+      }
     });
-    
+
+    if (created) {
+      console.log('✅ Admin user created:', adminEmail);
+    } else {
+      console.log('ℹ️ Admin user already exists:', adminEmail);
+    }
+
     console.log('✅ Database initialization completed!');
-    console.log(`   Admin: admin@restaurant.com`);
-    
     process.exit(0);
   } catch (error) {
     console.error('❌ Database initialization failed:');

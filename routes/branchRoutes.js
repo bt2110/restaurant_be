@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const branchController = require('../controllers/branchController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
+const { singleImageUpload, handleUploadError } = require('../middleware/uploadMiddleware');
 
 /**
  * @swagger
@@ -13,7 +14,7 @@ const { verifyToken, isAdmin } = require('../middleware/auth');
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required: ['branch_name']
@@ -24,6 +25,10 @@ const { verifyToken, isAdmin } = require('../middleware/auth');
  *               description:
  *                 type: string
  *                 example: 'Nhà hàng ở phố Hàng Ngoài'
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh chi nhánh (tùy chọn)
  *               rid:
  *                 type: string
  *                 example: 'br-custom-id'
@@ -67,7 +72,7 @@ const { verifyToken, isAdmin } = require('../middleware/auth');
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/', verifyToken, isAdmin, branchController.createBranch);
+router.post('/', verifyToken, isAdmin, singleImageUpload, handleUploadError, branchController.createBranch);
 router.get('/', verifyToken, branchController.getAllBranches);
 
 /**
@@ -138,7 +143,10 @@ router.get('/', verifyToken, branchController.getAllBranches);
  *         $ref: '#/components/responses/NotFound'
  */
 router.get('/:id', verifyToken, branchController.getBranchDetail);
-router.put('/:id', verifyToken, isAdmin, branchController.updateBranch);
+router.put('/:id', verifyToken, isAdmin, singleImageUpload, handleUploadError, branchController.updateBranch);
 router.delete('/:id', verifyToken, isAdmin, branchController.deleteBranch);
+
+// Dedicated image upload/delete endpoints for branches were removed.
+// Branch creation and update already accept an optional `image` via multipart `req.file`.
 
 module.exports = router;

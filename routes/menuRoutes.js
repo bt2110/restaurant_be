@@ -4,6 +4,7 @@ const router = express.Router();
 const { verifyToken, isAdminOrManager } = require('../middleware/auth');
 const categoryController = require('../controllers/categoryController');
 const itemController = require('../controllers/itemController');
+const { singleImageUpload, handleUploadError } = require('../middleware/uploadMiddleware');
 
 // ==================== MENU CATEGORIES ====================
 
@@ -16,7 +17,7 @@ const itemController = require('../controllers/itemController');
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required: ['category_name', 'branch_id']
@@ -30,6 +31,10 @@ const itemController = require('../controllers/itemController');
  *               branch_id:
  *                 type: integer
  *                 example: 1
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh danh mục (tùy chọn)
  *     responses:
  *       201:
  *         description: Danh mục được tạo thành công
@@ -50,8 +55,10 @@ const itemController = require('../controllers/itemController');
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post('/categories', verifyToken, isAdminOrManager, categoryController.createCategory);
+router.post('/categories', verifyToken, isAdminOrManager, singleImageUpload, handleUploadError, categoryController.createCategory);
 router.get('/categories', verifyToken, categoryController.getAllCategories);
+router.post('/categories/:id/image', verifyToken, isAdminOrManager, singleImageUpload, handleUploadError, categoryController.uploadCategoryImage);
+router.delete('/categories/:id/image', verifyToken, isAdminOrManager, categoryController.deleteCategoryImageHandler);
 
 /**
  * @swagger
@@ -82,7 +89,7 @@ router.get('/categories', verifyToken, categoryController.getAllCategories);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -90,6 +97,10 @@ router.get('/categories', verifyToken, categoryController.getAllCategories);
  *                 type: string
  *               description:
  *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh danh mục (tùy chọn)
  *     responses:
  *       200:
  *         description: Danh mục được cập nhật
@@ -111,7 +122,7 @@ router.get('/categories', verifyToken, categoryController.getAllCategories);
  *         $ref: '#/components/responses/NotFound'
  */
 router.get('/categories/:id', verifyToken, categoryController.getCategoryDetail);
-router.put('/categories/:id', verifyToken, isAdminOrManager, categoryController.updateCategory);
+router.put('/categories/:id', verifyToken, isAdminOrManager, singleImageUpload, handleUploadError, categoryController.updateCategory);
 router.delete('/categories/:id', verifyToken, isAdminOrManager, categoryController.deleteCategory);
 
 // ==================== MENU ITEMS ====================
@@ -125,7 +136,7 @@ router.delete('/categories/:id', verifyToken, isAdminOrManager, categoryControll
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required: ['item_name', 'category_id', 'price', 'branch_id']
@@ -143,11 +154,13 @@ router.delete('/categories/:id', verifyToken, isAdminOrManager, categoryControll
  *                 type: number
  *                 format: float
  *                 example: 45000
- *               image_url:
- *                 type: string
  *               branch_id:
  *                 type: integer
  *                 example: 1
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh mục menu (tùy chọn)
  *     responses:
  *       201:
  *         description: Mục menu được tạo thành công
@@ -171,8 +184,10 @@ router.delete('/categories/:id', verifyToken, isAdminOrManager, categoryControll
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post('/items', verifyToken, isAdminOrManager, itemController.createItem);
+router.post('/items', verifyToken, isAdminOrManager, singleImageUpload, handleUploadError, itemController.createItem);
 router.get('/items', verifyToken, itemController.getAllItems);
+router.post('/items/:id/image', verifyToken, isAdminOrManager, singleImageUpload, handleUploadError, itemController.uploadItemImage);
+router.delete('/items/:id/image', verifyToken, isAdminOrManager, itemController.deleteItemImageHandler);
 
 /**
  * @swagger
@@ -203,7 +218,7 @@ router.get('/items', verifyToken, itemController.getAllItems);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -213,8 +228,10 @@ router.get('/items', verifyToken, itemController.getAllItems);
  *                 type: string
  *               price:
  *                 type: number
- *               image_url:
+ *               image:
  *                 type: string
+ *                 format: binary
+ *                 description: Ảnh mục menu (tùy chọn)
  *     responses:
  *       200:
  *         description: Mục menu được cập nhật
@@ -236,7 +253,7 @@ router.get('/items', verifyToken, itemController.getAllItems);
  *         $ref: '#/components/responses/NotFound'
  */
 router.get('/items/:id', verifyToken, itemController.getItemDetail);
-router.put('/items/:id', verifyToken, isAdminOrManager, itemController.updateItem);
+router.put('/items/:id', verifyToken, isAdminOrManager, singleImageUpload, handleUploadError, itemController.updateItem);
 router.delete('/items/:id', verifyToken, isAdminOrManager, itemController.deleteItem);
 
 module.exports = router;

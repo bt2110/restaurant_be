@@ -3,7 +3,7 @@
 const db = require('../models');
 const logger = require('../middleware/logger');
 const responseUtil = require('../utils/responseUtil');
-const { branchService } = require('../services');
+const imageUtil = require('../utils/imageUtil');
 const ridUtil = require('../utils/ridUtil');
 const Branch = db.Branch;
 
@@ -27,6 +27,9 @@ exports.getAllBranches = async (req, res) => {
       correlationId,
       context: { count: branches.length }
     });
+
+    // Convert relative image paths to full URLs
+    imageUtil.attachFullUrls(branches, req);
 
     return res.json(responseUtil.success(req,
       `Lấy danh sách ${branches.length} chi nhánh thành công`,
@@ -90,6 +93,9 @@ exports.getBranchDetail = async (req, res) => {
       context: { branchId: id, branch_name: branch.branch_name }
     });
 
+    // Attach full URL for image
+    imageUtil.attachFullUrls(branch, req);
+
     return res.json(responseUtil.success(req,
       'Lấy thông tin chi nhánh thành công',
       branch
@@ -112,12 +118,31 @@ exports.createBranch = async (req, res) => {
   const { branch_name, description } = req.body;
 
   try {
-    const newBranch = await Branch.create({
+    // Prepare payload
+    const payload = {
       rid: ridUtil.generateRid('br'),
       branch_name,
       description,
       is_delete: false
-    });
+    };
+
+    // If an image file is provided in multipart/form-data, validate and save
+    if (req.file) {
+      const validation = imageUtil.validateImageFile(req.file.buffer, req.file.originalname);
+      if (!validation.isValid) {
+        return res.status(400).json(responseUtil.validationError(req,
+          validation.error,
+          { file: validation.error }
+        ));
+      }
+      const imagePath = imageUtil.saveBranchImage(req.file.buffer, 'new');
+      payload.branch_image = imagePath;
+    }
+
+    const newBranch = await Branch.create(payload);
+
+    // Attach full URL for image
+    imageUtil.attachFullUrls(newBranch, req);
 
     return res.status(201).json(responseUtil.success(req,
       'Tạo chi nhánh thành công',
@@ -144,10 +169,30 @@ exports.updateBranch = async (req, res) => {
   const { branch_name, description } = req.body;
 
   try {
-    const [updatedRows] = await Branch.update(
-      { branch_name, description },
-      { where: { branch_id: id, is_delete: false } }
-    );
+    const branch = await Branch.findOne({ where: { branch_id: id, is_delete: false } });
+    if (!branch) {
+      return res.status(404).json(responseUtil.notFound(req,
+        'Không tìm thấy chi nhánh hoặc chi nhánh đã bị xóa'
+      ));
+    }
+
+    // If file provided, validate and update image
+    let imagePath;
+    if (req.file) {
+      const validation = imageUtil.validateImageFile(req.file.buffer, req.file.originalname);
+      if (!validation.isValid) {
+        return res.status(400).json(responseUtil.validationError(req,
+          validation.error,
+          { file: validation.error }
+        ));
+      }
+      imagePath = imageUtil.updateBranchImage(req.file.buffer, id, branch.branch_image);
+    }
+
+    const updatePayload = { branch_name, description };
+    if (imagePath) updatePayload.branch_image = imagePath;
+
+    const [updatedRows] = await Branch.update(updatePayload, { where: { branch_id: id, is_delete: false } });
 
     if (updatedRows === 0) {
       return res.status(404).json(responseUtil.notFound(req,
@@ -156,6 +201,9 @@ exports.updateBranch = async (req, res) => {
     }
 
     const updatedBranch = await Branch.findByPk(id);
+
+    // Attach full URL for image
+    imageUtil.attachFullUrls(updatedBranch, req);
 
     return res.json(responseUtil.success(req,
       'Cập nhật chi nhánh thành công',
@@ -196,3 +244,6 @@ exports.deleteBranch = async (req, res) => {
     ));
   }
 };
+
+// Note: Dedicated branch image upload/delete handlers were removed.
+// Image handling for branches is performed during create/update via multipart `req.file`.
